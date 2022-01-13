@@ -1,33 +1,6 @@
 Uddish Sood
-Shivam Aarya
-Kevin Chang
-Beau Sorin
-Cabell Mercer
-Elias Clemens
-
-Aashish Chidambaram
-Adith Kotha
-Adithya Pramod Kumar
-Alan Ji
-Alex Le
-Allen Guo
-Andrew Chan
-Andrew Yount
-Aneesh Kalaga
-Angelina Wang (goes by alex)
-Arihant Jain
-Ashwin Thapa
-Brayden Duren
-Casey Jones
-Conner Blumkin
-Danny Huang
-Dennis Madapatu
-Emily Wei
-Eva Raffel
-Evan Easley
-Grace Amgalan
-Jackson Slaughter
-James Ferrolino
+Lia Knighten
+Sunny Cui
 Jason Fang
 Jason Niu
 Jazmyne Jackson
@@ -38,9 +11,9 @@ Kate Metcalf
 Kayden Li
 Kerry Cao
 Kevin Cargile
-Lia Knighten
-Maddox Stone
 Mahin Hasani
+Andrew Chan
+Shivam Aarya
 Matthew Banks
 Michael Wang
 Nathaniel Bone
@@ -51,5 +24,31 @@ Robert Harrison Moffatt
 Saphe Al Dean Khader
 Seth white
 Simon Gilbert
-Sunny Cui
+James Ferrolino
+Jackson Slaughter
+Grace Amgalan
+Eva Raffel
+Evan Easley
+Kevin Chang
+Beau Sorin
+Cabell Mercer
+Elias Clemens
+Aashish Chidambaram
+Adith Kotha
+Adithya Pramod Kumar
+Alan Ji
+Alex Le
+Allen Guo
+Andrew Yount
+Maddox Stone
+Aneesh Kalaga
+Angelina Wang (goes by alex)
+Arihant Jain
+Ashwin Thapa
+Brayden Duren
+Casey Jones
+Conner Blumkin
+Danny Huang
+Dennis Madapatu
+Emily Wei
 Tristan Laquindanum
