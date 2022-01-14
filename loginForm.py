@@ -3,12 +3,53 @@ from tkinter.ttk import Style
 from tkinter import messagebox
 import pandas as pd
 from datetime import datetime
-import time
+from github import Github
 
-# TODO: Make it auto-upload to github when closed
+
+# Github stuff
+user = "RoboticsLogger"
+with open("password.txt", "r") as f:
+    password = f.readline()
+
+def gitUpload():
+    now = datetime.now()
+    date = now.strftime("%Y-%m-%d")
+    day = now.weekday()
+    day_of_the_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    commit_message = "Updated " + date + " (" + day_of_the_week[day] + ")"
+
+    g = Github(password)
+    repo = g.get_user().get_repo('RoboticsLog')  # repo name
+
+    all_files = []
+    contents = repo.get_contents("")
+    while contents:
+        file_content = contents.pop(0)
+        if file_content.type == "dir":
+            contents.extend(repo.get_contents(file_content.path))
+        else:
+            file = file_content
+            all_files.append(str(file).replace('ContentFile(path="', '').replace('")', ''))
+
+    with open('RoboticsHourLog.csv', 'r') as file:
+        content = file.read()
+
+    # Upload to github
+    git_prefix = ''
+    git_file = git_prefix + 'RoboticsHourLog.csv'
+    if git_file in all_files:
+        contents = repo.get_contents(git_file)
+        repo.update_file(contents.path, commit_message, content, contents.sha, branch="main")
+        print(git_file + ' UPDATED')
+    else:
+        repo.create_file(git_file, commit_message, content, branch="main")
+        print(git_file + ' CREATED')
+
+
+
 
 # File import
-df = pd.read_csv("RoboticsHourLog.csv")
+df = pd.read_csv("backup/RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
 # Create cache to store all people that have signed in and not signed out
@@ -63,12 +104,14 @@ def on_closing(df):
             save_df = df.sort_values(by=["Hours"], ascending=False)
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             print(save_df)
+            gitUpload()
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             save_df = df.sort_values(by=["Hours"], ascending=False)
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             print(save_df)
+            gitUpload()
             root.destroy()
 
 
@@ -167,8 +210,7 @@ def listbox_search(event):
             event.widget.see(i)
             name_box.event_generate("<<ListboxSelect>>")
             name_box.see(i)
-            print(i)
-            print("beginning" + search_string)
+            print(search_string)
             found = True
             break
     if not found:
@@ -177,7 +219,6 @@ def listbox_search(event):
                 name_box.select_clear(0, END)
                 name_box.selection_set(i)
                 name_box.see(i)
-                print(i)
                 print(search_string)
                 found = True
                 break
