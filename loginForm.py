@@ -119,12 +119,10 @@ root.protocol("WM_DELETE_WINDOW", lambda: on_closing(df))
 
 
 # Instructions
-# TODO: Add a dropdown meny to select the name of the person who is signing in with the ability to type and search for the name
 myLabel = Label(root, text="Find for your name:")
 
 
 # Pick name
-# TODO: Add keybinds to the listbox
 name_frame = Frame(root)
 # Scrollbar
 name_scrollbar = Scrollbar(name_frame, orient=VERTICAL)
@@ -145,7 +143,7 @@ name_box.select_set(0)
 def save():
     name = name_box.get(name_box.curselection())
     if messagebox.askyesno("Save", f"Do you want to {r.get()} {name}?"):
-        # TODO: Create signing in and signing out function, be able to sign in multiple people at once
+        # TODO: Be able to sign in multiple people at once
         if r.get() == "sign in":
             signed_in.append(name)
             now = datetime.now()
