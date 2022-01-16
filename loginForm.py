@@ -6,6 +6,10 @@ from datetime import datetime
 from github import Github
 
 
+# Update local form
+
+
+
 # Github stuff
 user = "RoboticsLogger"
 with open("password.txt", "r") as f:
@@ -44,6 +48,8 @@ def gitUpload():
     else:
         repo.create_file(git_file, commit_message, content, branch="main")
         print(git_file + ' CREATED')
+
+    return commit_message
 
 
 
@@ -103,15 +109,17 @@ def on_closing(df):
             print("Set everyone to _ hours by default and add 'did not sign out' to it")
             save_df = df.sort_values(by=["Hours"], ascending=False)
             save_df.to_csv("RoboticsHourLog.csv", index=False)
+            message = gitUpload()
+            save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
-            gitUpload()
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             save_df = df.sort_values(by=["Hours"], ascending=False)
             save_df.to_csv("RoboticsHourLog.csv", index=False)
+            message = gitUpload()
+            save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
-            gitUpload()
             root.destroy()
 
 
