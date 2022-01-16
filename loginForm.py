@@ -55,7 +55,7 @@ def gitUpload():
 
 
 # File import
-df = pd.read_csv("backup/RoboticsHourLog.csv")
+df = pd.read_csv("RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
 # Create cache to store all people that have signed in and not signed out
