@@ -1,3 +1,4 @@
+import os
 from tkinter import *
 from tkinter.ttk import Style
 from tkinter import messagebox
@@ -6,14 +7,36 @@ from datetime import datetime
 from github import Github
 
 
-# Update local form
-
-
 
 # Github stuff
 user = "RoboticsLogger"
 with open("password.txt", "r") as f:
     password = f.readline()
+g = Github(password)
+
+def gitDownload():
+    repo = g.get_user().get_repo('RoboticsLog')  # repo name
+
+    all_files = []
+    contents = repo.get_contents("")
+    while contents:
+        file_content = contents.pop(0)
+        if file_content.type == "dir":
+            contents.extend(repo.get_contents(file_content.path))
+        else:
+            file = file_content
+            all_files.append(str(file).replace('ContentFile(path="', '').replace('")', ''))
+
+    # Download from github
+    git_prefix = ''
+    git_file = git_prefix + 'RoboticsHourLog.csv'
+    if git_file in all_files:
+        contents = repo.get_contents(git_file)
+        with open("RoboticsHourLog.csv", "wb") as f:
+            f.write(contents.decoded_content)
+    else:
+        print("Repo does not contain the csv file")
+
 
 def gitUpload():
     now = datetime.now()
@@ -22,7 +45,6 @@ def gitUpload():
     day_of_the_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     commit_message = "Updated " + date + " (" + day_of_the_week[day] + ")"
 
-    g = Github(password)
     repo = g.get_user().get_repo('RoboticsLog')  # repo name
 
     all_files = []
@@ -55,6 +77,7 @@ def gitUpload():
 
 
 # File import
+gitDownload()
 df = pd.read_csv("RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
@@ -112,6 +135,12 @@ def on_closing(df):
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
+            try:
+                os.remove("RoboticsHourLog.csv")
+                print("Removed successfully")
+            except OSError as error:
+                print(error)
+                print("File path can not be removed")
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
@@ -120,6 +149,12 @@ def on_closing(df):
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
+            try:
+                os.remove("RoboticsHourLog.csv")
+                print("Removed successfully")
+            except OSError as error:
+                print(error)
+                print("File path can not be removed")
             root.destroy()
 
 

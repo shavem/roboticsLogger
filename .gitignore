@@ -235,3 +235,4 @@ cython_debug/
 
 !/password.txt
 !/RoboticsHourLog.csv
+/password.txt
