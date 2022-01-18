@@ -6,6 +6,14 @@ import pandas as pd
 from datetime import datetime
 from github import Github
 
+
+# Change based on deployment or development version
+
+repo_name = "RoboticsLog"
+# repo_name = 'RoboticsLogDevelopment'
+
+
+
 # Github stuff
 user = "RoboticsLogger"
 with open("password.txt", "r") as f:
@@ -14,7 +22,7 @@ g = Github(password)
 
 
 def gitDownload():
-    repo = g.get_user().get_repo('RoboticsLog')  # repo name
+    repo = g.get_user().get_repo(repo_name)  # repo name
 
     all_files = []
     contents = repo.get_contents("")
@@ -44,7 +52,7 @@ def gitUpload():
     day_of_the_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     commit_message = "Updated " + date + " (" + day_of_the_week[day] + ")"
 
-    repo = g.get_user().get_repo('RoboticsLog')  # repo name
+    repo = g.get_user().get_repo(repo_name)  # repo name
 
     all_files = []
     contents = repo.get_contents("")
@@ -131,7 +139,12 @@ def on_closing(df):
         if messagebox.askokcancel("Quit",
                                   f"Do you want to quit? The following people have not signed out and will be set to a default of 1 hour: {list_to_string(signed_in)}"):
             # TODO: set default hours for people who didn't sign out and add the "not signed out" attribute
-            print("Set everyone to _ hours by default and add 'did not sign out' to it")
+            for name in signed_in:
+                seconds_to_add = 1 * 60 * 60
+                df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
+                df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
+                    time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
+                print(f"{name} not signed out (default 1 hour)")
             save_df = df.sort_values(by=["Hours"], ascending=False)
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
@@ -194,11 +207,11 @@ def save():
         elif r.get() == "sign out":
             signed_in.remove(name)
             now = datetime.now()
-            hours_to_add = time_difference(df.loc[df.index[df["Name"] == name].tolist()[0], current_date],
+            seconds_to_add = time_difference(df.loc[df.index[df["Name"] == name].tolist()[0], current_date],
                                            now.strftime("%H:%M:%S"))
             df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - {now.strftime('%H:%M:%S')}"
             df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
-                time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + hours_to_add)
+                time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
             print(f"{name} signed out at {now.strftime('%H:%M:%S')}")
         else:
             print("Error: invalid input")
