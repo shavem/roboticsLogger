@@ -131,7 +131,12 @@ def on_closing(df):
         if messagebox.askokcancel("Quit",
                                   f"Do you want to quit? The following people have not signed out and will be set to a default of 1 hour: {list_to_string(signed_in)}"):
             # TODO: set default hours for people who didn't sign out and add the "not signed out" attribute
-            print("Set everyone to _ hours by default and add 'did not sign out' to it")
+            for name in signed_in:
+                seconds_to_add = 1 * 60 * 60
+                df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
+                df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
+                    time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
+                print(f"{name} not signed out (default 1 hour)")
             save_df = df.sort_values(by=["Hours"], ascending=False)
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
