@@ -137,7 +137,7 @@ def on_closing(df):
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
                 print(f"{name} not signed out (default 1 hour)")
-            save_df = df.sort_values(by=["Hours"], ascending=False)
+            save_df = df.sort_values(by=["Hours"], ascending=False, key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
@@ -151,7 +151,7 @@ def on_closing(df):
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
-            save_df = df.sort_values(by=["Hours"], ascending=False)
+            save_df = df.sort_values(by=["Hours"], ascending=False, key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
