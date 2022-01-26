@@ -133,6 +133,7 @@ def on_closing(df):
             # TODO: set default hours for people who didn't sign out and add the "not signed out" attribute
             for name in signed_in:
                 seconds_to_add = 1 * 60 * 60
+
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
@@ -192,19 +193,25 @@ def save():
     if messagebox.askyesno("Save", f"Do you want to {r.get()} {name}?"):
         # TODO: Be able to sign in multiple people at once
         if r.get() == "sign in":
-            signed_in.append(name)
-            now = datetime.now()
-            df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = now.strftime("%H:%M:%S")
-            print(f"{name} signed in at {now.strftime('%H:%M:%S')}")
+            if name in signed_in:
+                messagebox.showerror("Error", f"{name} has already signed in")
+            else:
+                signed_in.append(name)
+                now = datetime.now()
+                df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = now.strftime("%H:%M:%S")
+                print(f"{name} signed in at {now.strftime('%H:%M:%S')}")
         elif r.get() == "sign out":
-            signed_in.remove(name)
-            now = datetime.now()
-            hours_to_add = time_difference(df.loc[df.index[df["Name"] == name].tolist()[0], current_date],
-                                           now.strftime("%H:%M:%S"))
-            df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - {now.strftime('%H:%M:%S')}"
-            df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
-                time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + hours_to_add)
-            print(f"{name} signed out at {now.strftime('%H:%M:%S')}")
+            if name not in signed_in:
+                messagebox.showerror("Error", f"{name} has not signed in")
+            else:
+                signed_in.remove(name)
+                now = datetime.now()
+                hours_to_add = time_difference(df.loc[df.index[df["Name"] == name].tolist()[0], current_date],
+                                               now.strftime("%H:%M:%S"))
+                df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - {now.strftime('%H:%M:%S')}"
+                df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
+                    time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + hours_to_add)
+                print(f"{name} signed out at {now.strftime('%H:%M:%S')}")
         else:
             print("Error: invalid input")
 
