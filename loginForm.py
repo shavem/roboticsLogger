@@ -13,7 +13,7 @@ with open("password.txt", "r") as f:
 g = Github(password)
 
 
-def gitDownload():
+def gitDownload(filepath):
     repo = g.get_user().get_repo('RoboticsLog')  # repo name
 
     all_files = []
@@ -31,7 +31,7 @@ def gitDownload():
     git_file = git_prefix + 'RoboticsHourLog.csv'
     if git_file in all_files:
         contents = repo.get_contents(git_file)
-        with open("RoboticsHourLog.csv", "wb") as f:
+        with open(filepath, "wb") as f:
             f.write(contents.decoded_content)
     else:
         print("Repo does not contain the csv file")
@@ -74,7 +74,7 @@ def gitUpload():
 
 
 # File import
-gitDownload()
+gitDownload("RoboticsHourLog.csv")
 df = pd.read_csv("RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
@@ -138,6 +138,25 @@ def on_closing(df):
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
                 print(f"{name} not signed out (default 1 hour)")
+            gitDownload("OG.csv")
+            ogdf = pd.read_csv("OG.csv")
+            ogdf.to_csv("OG.csv", index=False)
+            ognow = datetime.now()
+            ogcurrent_date = ognow.strftime("%Y-%m-%d")
+            if ogcurrent_date in ogdf.columns:
+                for name in ogdf["Name"]:
+                    if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
+                        df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = ogdf.loc[
+                            ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
+                        print(name + ": " + str(
+                            df.loc[df.index[df["Name"] == name].tolist()[0], current_date]) + " -> " + str(
+                            ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
+            try:
+                os.remove("OG.csv")
+                print("Removed successfully")
+            except OSError as error:
+                print(error)
+                print("File path can not be removed")
             save_df = df.sort_values(by=["Hours"], ascending=False, key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
@@ -152,6 +171,25 @@ def on_closing(df):
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
+            gitDownload("OG.csv")
+            ogdf = pd.read_csv("OG.csv")
+            ogdf.to_csv("OG.csv", index=False)
+            ognow = datetime.now()
+            ogcurrent_date = ognow.strftime("%Y-%m-%d")
+            if ogcurrent_date in ogdf.columns:
+                for name in ogdf["Name"]:
+                    if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
+                        df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = ogdf.loc[
+                            ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
+                        print(name + ": " + str(
+                            df.loc[df.index[df["Name"] == name].tolist()[0], current_date]) + " -> " + str(
+                            ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
+            try:
+                os.remove("OG.csv")
+                print("Removed successfully")
+            except OSError as error:
+                print(error)
+                print("File path can not be removed")
             save_df = df.sort_values(by=["Hours"], ascending=False, key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
