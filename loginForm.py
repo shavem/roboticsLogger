@@ -78,6 +78,26 @@ gitDownload("RoboticsHourLog.csv")
 df = pd.read_csv("RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
+gitDownload("OG.csv")
+ogdf = pd.read_csv("OG.csv")
+ogdf.to_csv("OG.csv", index=False)
+ognow = datetime.now()
+ogcurrent_date = ognow.strftime("%Y-%m-%d")
+if ogcurrent_date in ogdf.columns:
+    for name in ogdf["Name"]:
+        if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
+            df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
+                ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
+            print(name + ": " + str(
+                df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date]) + " -> " + str(
+                ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
+try:
+    os.remove("OG.csv")
+    print("\u001b[32mRemoved successfully\u001b[0m")
+except OSError as error:
+    print(error)
+    print("File path can not be removed")
+
 # Create cache to store all people that have signed in and not signed out
 signed_in = []
 
@@ -146,14 +166,14 @@ def on_closing(df):
             if ogcurrent_date in ogdf.columns:
                 for name in ogdf["Name"]:
                     if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
-                        df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = ogdf.loc[
+                        df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
                             ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
                         print(name + ": " + str(
-                            df.loc[df.index[df["Name"] == name].tolist()[0], current_date]) + " -> " + str(
+                            df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date]) + " -> " + str(
                             ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
             try:
                 os.remove("OG.csv")
-                print("Removed successfully")
+                print("\u001b[32mRemoved successfully\u001b[0m")
             except OSError as error:
                 print(error)
                 print("File path can not be removed")
@@ -164,7 +184,7 @@ def on_closing(df):
             print(save_df)
             try:
                 os.remove("RoboticsHourLog.csv")
-                print("Removed successfully")
+                print("\u001b[32mRemoved successfully\u001b[0m")
             except OSError as error:
                 print(error)
                 print("File path can not be removed")
@@ -179,14 +199,14 @@ def on_closing(df):
             if ogcurrent_date in ogdf.columns:
                 for name in ogdf["Name"]:
                     if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
-                        df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = ogdf.loc[
+                        df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
                             ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
                         print(name + ": " + str(
-                            df.loc[df.index[df["Name"] == name].tolist()[0], current_date]) + " -> " + str(
+                            df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date]) + " -> " + str(
                             ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
             try:
                 os.remove("OG.csv")
-                print("Removed successfully")
+                print("\u001b[32mRemoved successfully\u001b[0m")
             except OSError as error:
                 print(error)
                 print("File path can not be removed")
@@ -197,7 +217,7 @@ def on_closing(df):
             print(save_df)
             try:
                 os.remove("RoboticsHourLog.csv")
-                print("Removed successfully")
+                print("\u001b[32mRemoved successfully\u001b[0m")
             except OSError as error:
                 print(error)
                 print("File path can not be removed")
@@ -237,7 +257,7 @@ def save():
                 signed_in.append(name)
                 now = datetime.now()
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = now.strftime("%H:%M:%S")
-                print(f"{name} signed in at {now.strftime('%H:%M:%S')}")
+                print(f"\u001b[36m{name} signed in at {now.strftime('%H:%M:%S')}\u001b[0m")
         elif r.get() == "sign out":
             if name not in signed_in:
                 messagebox.showerror("Error", f"{name} has not signed in")
@@ -249,7 +269,7 @@ def save():
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - {now.strftime('%H:%M:%S')}"
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + hours_to_add)
-                print(f"{name} signed out at {now.strftime('%H:%M:%S')}")
+                print(f"\u001b[35m{name} signed out at {now.strftime('%H:%M:%S')}\u001b[0m")
         else:
             print("Error: invalid input")
 
