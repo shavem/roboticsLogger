@@ -6,6 +6,13 @@ import pandas as pd
 from datetime import datetime
 from github import Github
 
+
+# TODO: fix search to restart with the typed function instead of just clearing
+# TODO: display everyone's current hours in the main menu
+# TODO: Make message confirmation boxes colored
+# TODO: subtract an hour from Uddish
+
+
 # Github stuff
 user = "RoboticsLogger"
 with open("password.txt", "r") as f:
