@@ -346,13 +346,13 @@ def listbox_search(event):
                 name_box.select_clear(0, END)
                 name_box.selection_set(i)
                 name_box.see(i)
-                print(search_string)
+                print(f"searching: {search_string}" + " (partial match)")
                 found = True
                 break
     if not found:
         search.set(event.char)
         print("search cleared")
-        print(f"searching: {search_string}")
+        print(f"searching: {event.char}")
 
 
 root.bind("<Key>", lambda event: listbox_search(event))
