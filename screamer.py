@@ -1,47 +1,51 @@
 import time
-
 import requests
 import json
-import asyncio
+import threading
 from gtts import gTTS
 from playsound import playsound
 import os
 
-running = True
+
+# channelid = "862494771615891476"  # Door-channel
+channelid = "940177279953301524"  # Dev-testing
 
 
-# async def screamer():
-#     og = retrieve_door_user(channelid="862494771615891476")
-#     while running:
-#         if og != retrieve_door_user(channelid="862494771615891476"):
-#             print(f'{retrieve_door_user(channelid="862494771615891476")} is a screamer')
-#             og = retrieve_door_user(channelid="862494771615891476")
+# def screamer(channelid, interval):
+#     og = retrieve_door_user(channelid)
+#     while True:
+#         time.sleep(interval)
+#         user = retrieve_door_user(channelid)
+#         if og != user:
+#             print(f'{user} is a screamer')
+#             og = user
 
-
-# async def tkloop():
-#     tkintermainloop = 1
-#
-#
-# async def main():
-#     await asyncio.gather(screamer(), tkloop())
 
 
 def retrieve_door_user(channelid):
     headers = {
-        'authorization': "MzA2NTM4NzAzNjg0MjM5MzYw.YZ7nvA.pCNYSWGszqKWmcbz3LVBhgFcRgo",
+        # 'authorization': "MzA2NTM4NzAzNjg0MjM5MzYw.YZ7nvA.pCNYSWGszqKWmcbz3LVBhgFcRgo",
+        'authorization': "mfa.cS-xvOm-L7m-KeOxNBOHrFplEvCS6YDhg6-h5rGbRKiAERAJ24EibBroAVxlqTZIRDldeLwlJ9-gTUThCy7g",
     }
     r = requests.get(f"https://discord.com/api/v9/channels/{channelid}/messages", headers=headers)
     jsonn = json.loads(r.text)
     for message in jsonn:
-        if ("testing123" in message["content"]):
+        # if ("<@&862495078727680001>" in message["content"]):
+        #     return message["author"]["username"]
+        if ("hi" in message["content"]):
+            # return message["author"]["username"]
             print(message["author"]["username"])
-        if ("<@&862495078727680001>" in message["content"]):
-            return message["author"]["username"]
 
 
-# asyncio.run(main())
 
-retrieve_door_user(channelid="862494771615891476")
+# thread = threading.Thread(target=screamer, args=(channelid, 5))
+# thread.start()
+# time.sleep(60)
+# if thread.is_alive():
+#     thread.join()
+#     print("Thread is dead")
+
+print(retrieve_door_user(channelid))
 
 # scream = gTTS(text="lewis", lang="en", slow=False)
 # await scream.save("scream.mp3")

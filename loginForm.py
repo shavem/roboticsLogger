@@ -5,9 +5,10 @@ from tkinter import messagebox
 import pandas as pd
 from datetime import datetime
 from github import Github
+from dotenv import load_dotenv
 
 
-# TODO: fix search to restart with the typed function instead of just clearing
+
 # TODO: display everyone's current hours in the main menu
 # TODO: Make message confirmation boxes colored
 # TODO: subtract an hour from Uddish
@@ -15,13 +16,15 @@ from github import Github
 
 # Github stuff
 user = "RoboticsLogger"
-with open("password.txt", "r") as f:
-    password = f.readline()
+load_dotenv()
+password = os.environ.get("password")
 g = Github(password)
+build = os.environ.get("build")
 
 
 def gitDownload(filepath):
-    repo = g.get_user().get_repo('RoboticsLog')  # repo name
+    repo = g.get_user().get_repo(build)  # repo name
+    print("Downloading from " + build)
 
     all_files = []
     contents = repo.get_contents("")
@@ -51,7 +54,8 @@ def gitUpload():
     day_of_the_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
     commit_message = "Updated " + date + " (" + day_of_the_week[day] + ")"
 
-    repo = g.get_user().get_repo('RoboticsLog')  # repo name
+    repo = g.get_user().get_repo(build)  # repo name
+    print("Uploading to " + build)
 
     all_files = []
     contents = repo.get_contents("")
@@ -157,7 +161,6 @@ def on_closing(df):
     if len(signed_in) > 0:
         if messagebox.askokcancel("Quit",
                                   f"Do you want to quit? The following people have not signed out and will be set to a default of 1 hour: {list_to_string(signed_in)}"):
-            # TODO: set default hours for people who didn't sign out and add the "not signed out" attribute
             for name in signed_in:
                 seconds_to_add = 1 * 60 * 60
 
@@ -240,13 +243,19 @@ myLabel = Label(root, text="Find for your name:")
 name_frame = Frame(root)
 # Scrollbar
 name_scrollbar = Scrollbar(name_frame, orient=VERTICAL)
-name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=30)
+name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=40)
 name_scrollbar.config(command=name_box.yview)
 
 names = []
-# Populate listbox
+# Populate listbox with a specified max string length
+length = 37
 for row in df.iterrows():
-    name_box.insert(END, row[1]["Name"])
+    name = row[1]["Name"]
+    hours = row[1]["Hours"]
+    string = f"{name}{' ' * (37 - len(hours) - len(name))}{hours}"
+    print(string)
+    name_box.insert(END, string)
+
     names.append(row[1]["Name"])
 # Set initial selection
 name_box.select_set(0)
@@ -328,7 +337,7 @@ def listbox_search(event):
             event.widget.see(i)
             name_box.event_generate("<<ListboxSelect>>")
             name_box.see(i)
-            print(search_string)
+            print(f"searching: {search_string}")
             found = True
             break
     if not found:
@@ -341,8 +350,9 @@ def listbox_search(event):
                 found = True
                 break
     if not found:
-        search.set("")
+        search.set(event.char)
         print("search cleared")
+        print(f"searching: {search_string}")
 
 
 root.bind("<Key>", lambda event: listbox_search(event))

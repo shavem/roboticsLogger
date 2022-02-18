@@ -233,7 +233,5 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 
-!/password.txt
-!/RoboticsHourLog.csv
-/password.txt
+/RoboticsHourLog.csv
 backup/
