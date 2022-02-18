@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 
 
 
-# TODO: display everyone's current hours in the main menu
+# TODO: make everyone's current hours in the main menu aligned to the right
 # TODO: Make message confirmation boxes colored
 # TODO: subtract an hour from Uddish
 
@@ -252,7 +252,7 @@ length = 37
 for row in df.iterrows():
     name = row[1]["Name"]
     hours = row[1]["Hours"]
-    string = f"{name}{' ' * (37 - len(hours) - len(name))}{hours}"
+    string = f"{name} - {hours}"
     print(string)
     name_box.insert(END, string)
 
