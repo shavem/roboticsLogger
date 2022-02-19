@@ -243,19 +243,13 @@ myLabel = Label(root, text="Find for your name:")
 name_frame = Frame(root)
 # Scrollbar
 name_scrollbar = Scrollbar(name_frame, orient=VERTICAL)
-name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=40)
+name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=37)
 name_scrollbar.config(command=name_box.yview)
 
 names = []
 # Populate listbox with a specified max string length
-length = 37
 for row in df.iterrows():
-    name = row[1]["Name"]
-    hours = row[1]["Hours"]
-    string = f"{name} - {hours}"
-    print(string)
-    name_box.insert(END, string)
-
+    name_box.insert(END, f"{row[1]['Name']} - {row[1]['Hours']}")
     names.append(row[1]["Name"])
 # Set initial selection
 name_box.select_set(0)
@@ -263,7 +257,7 @@ name_box.select_set(0)
 
 # Buttons
 def save():
-    name = name_box.get(name_box.curselection())
+    name = name_box.get(name_box.curselection())[:name_box.get(name_box.curselection()).index("-") - 1]
     if messagebox.askyesno("Save", f"Do you want to {r.get()} {name}?"):
         # TODO: Be able to sign in multiple people at once
         if r.get() == "sign in":
