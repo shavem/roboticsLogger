@@ -7,11 +7,11 @@ from datetime import datetime
 from github import Github
 from dotenv import load_dotenv
 
-
-
 # TODO: make everyone's current hours in the main menu aligned to the right
 # TODO: Make message confirmation boxes colored
 # TODO: subtract an hour from Uddish
+# TODO: Add colored text to messageboxes and main menu
+# TODO: Add a search box to the main menu so they can see search query without printing to console.
 
 
 # Github stuff
@@ -20,11 +20,17 @@ load_dotenv()
 password = os.environ.get("password")
 g = Github(password)
 build = os.environ.get("build")
+if build == "RoboticsLog":
+    print("\u001b[36mServer repo: RoboticsLog\u001b[0m")
+elif build == "RoboticsLogDevelopment":
+    print("\u001b[33mServer repo: RoboticsLogDevelopment\u001b[0m")
+else:
+    raise Exception(
+        f"Invalid build: {build}\nPlease set the BUILD= in the .env file to either RoboticsLog or RoboticsLogDevelopment.")
 
 
 def gitDownload(filepath):
     repo = g.get_user().get_repo(build)  # repo name
-    print("Downloading from " + build)
 
     all_files = []
     contents = repo.get_contents("")
@@ -44,7 +50,7 @@ def gitDownload(filepath):
         with open(filepath, "wb") as f:
             f.write(contents.decoded_content)
     else:
-        print("Repo does not contain the csv file")
+        raise Exception("Repo does not contain the csv file")
 
 
 def gitUpload():
@@ -55,7 +61,6 @@ def gitUpload():
     commit_message = "Updated " + date + " (" + day_of_the_week[day] + ")"
 
     repo = g.get_user().get_repo(build)  # repo name
-    print("Uploading to " + build)
 
     all_files = []
     contents = repo.get_contents("")
@@ -76,10 +81,10 @@ def gitUpload():
     if git_file in all_files:
         contents = repo.get_contents(git_file)
         repo.update_file(contents.path, commit_message, content, contents.sha, branch="main")
-        print(git_file + ' UPDATED')
+        print(f"\u001b[32m{git_file} updated\u001b[0m")
     else:
         repo.create_file(git_file, commit_message, content, branch="main")
-        print(git_file + ' CREATED')
+        print(f"\u001b[32m{git_file} created\u001b[0m")
 
     return commit_message
 
@@ -89,25 +94,30 @@ gitDownload("RoboticsHourLog.csv")
 df = pd.read_csv("RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
-gitDownload("OG.csv")
-ogdf = pd.read_csv("OG.csv")
-ogdf.to_csv("OG.csv", index=False)
-ognow = datetime.now()
-ogcurrent_date = ognow.strftime("%Y-%m-%d")
-if ogcurrent_date in ogdf.columns:
-    for name in ogdf["Name"]:
-        if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
-            df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
-                ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
-            print(name + ": " + str(
-                df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date]) + " -> " + str(
-                ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
-try:
-    os.remove("OG.csv")
-    print("\u001b[32mRemoved successfully\u001b[0m")
-except OSError as error:
-    print(error)
-    print("File path can not be removed")
+
+def sync(dataframe):
+    gitDownload("OG.csv")
+    ogdf = pd.read_csv("OG.csv")
+    ogdf.to_csv("OG.csv", index=False)
+    ognow = datetime.now()
+    ogcurrent_date = ognow.strftime("%Y-%m-%d")
+    if ogcurrent_date in ogdf.columns:
+        for name in ogdf["Name"]:
+            if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
+                print(
+                    f"\u001b[33m{name}: {str(dataframe.loc[dataframe.index[dataframe['Name'] == name].tolist()[0], ogcurrent_date])} -> {str(ogdf.loc[ogdf.index[ogdf['Name'] == name].tolist()[0], ogcurrent_date])}\u001b[0m")
+                dataframe.loc[dataframe.index[dataframe["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
+                    ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
+
+    try:
+        os.remove("OG.csv")
+        print("\u001b[32mOG.csv removed successfully\u001b[0m")
+    except OSError as error:
+        print(error)
+        print("\u001b[31mOG.csv can not be removed\u001b[0m")
+
+
+sync(df)
 
 # Create cache to store all people that have signed in and not signed out
 signed_in = []
@@ -167,70 +177,36 @@ def on_closing(df):
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
-                print(f"{name} not signed out (default 1 hour)")
-            gitDownload("OG.csv")
-            ogdf = pd.read_csv("OG.csv")
-            ogdf.to_csv("OG.csv", index=False)
-            ognow = datetime.now()
-            ogcurrent_date = ognow.strftime("%Y-%m-%d")
-            if ogcurrent_date in ogdf.columns:
-                for name in ogdf["Name"]:
-                    if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
-                        df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
-                            ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
-                        print(name + ": " + str(
-                            df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date]) + " -> " + str(
-                            ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
-            try:
-                os.remove("OG.csv")
-                print("\u001b[32mRemoved successfully\u001b[0m")
-            except OSError as error:
-                print(error)
-                print("File path can not be removed")
-            save_df = df.sort_values(by=["Hours"], ascending=False, key=lambda x: x.str.split(":").str.get(0).astype(int))
+                print(f"\u001b[4m\u001b[1m{name} not signed out (default 1 hour)\u001b[0m")
+            sync(df)
+            save_df = df.sort_values(by=["Hours"], ascending=False,
+                                     key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
             try:
                 os.remove("RoboticsHourLog.csv")
-                print("\u001b[32mRemoved successfully\u001b[0m")
+                print("\u001b[32mRoboticsHourLog.csv removed successfully\u001b[0m")
             except OSError as error:
                 print(error)
-                print("File path can not be removed")
+                print("\u001b[31mRoboticsHourLog.csv can not be removed\u001b[0m")
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
-            gitDownload("OG.csv")
-            ogdf = pd.read_csv("OG.csv")
-            ogdf.to_csv("OG.csv", index=False)
-            ognow = datetime.now()
-            ogcurrent_date = ognow.strftime("%Y-%m-%d")
-            if ogcurrent_date in ogdf.columns:
-                for name in ogdf["Name"]:
-                    if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
-                        df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
-                            ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]
-                        print(name + ": " + str(
-                            df.loc[df.index[df["Name"] == name].tolist()[0], ogcurrent_date]) + " -> " + str(
-                            ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]))
-            try:
-                os.remove("OG.csv")
-                print("\u001b[32mRemoved successfully\u001b[0m")
-            except OSError as error:
-                print(error)
-                print("File path can not be removed")
-            save_df = df.sort_values(by=["Hours"], ascending=False, key=lambda x: x.str.split(":").str.get(0).astype(int))
+            sync(df)
+            save_df = df.sort_values(by=["Hours"], ascending=False,
+                                     key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
             try:
                 os.remove("RoboticsHourLog.csv")
-                print("\u001b[32mRemoved successfully\u001b[0m")
+                print("\u001b[32mRoboticsHourLog.csv removed successfully\u001b[0m")
             except OSError as error:
                 print(error)
-                print("File path can not be removed")
+                print("\u001b[31mRoboticsHourLog.csv can not be removed\u001b[0m")
             root.destroy()
 
 
@@ -267,7 +243,7 @@ def save():
                 signed_in.append(name)
                 now = datetime.now()
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = now.strftime("%H:%M:%S")
-                print(f"\u001b[36m{name} signed in at {now.strftime('%H:%M:%S')}\u001b[0m")
+                print(f"\u001b[42;1m\u001b[1m{name}\u001b[0m signed in at {now.strftime('%H:%M:%S')}")
         elif r.get() == "sign out":
             if name not in signed_in:
                 messagebox.showerror("Error", f"{name} has not signed in")
@@ -279,7 +255,7 @@ def save():
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - {now.strftime('%H:%M:%S')}"
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + hours_to_add)
-                print(f"\u001b[35m{name} signed out at {now.strftime('%H:%M:%S')}\u001b[0m")
+                print(f"\u001b[41;1m\u001b[30m\u001b[1m{name}\u001b[0m signed out at {now.strftime('%H:%M:%S')}")
         else:
             print("Error: invalid input")
 
