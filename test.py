@@ -1,3 +1,3 @@
-string = "mike wasaowski - 1:14:99"
+string = "Searching: hi"
 
-print(string[:string.index("-") - 1])
+print(string[string.index(":") + 2:])

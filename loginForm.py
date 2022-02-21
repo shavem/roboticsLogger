@@ -9,9 +9,8 @@ from dotenv import load_dotenv
 
 # TODO: make everyone's current hours in the main menu aligned to the right
 # TODO: Make message confirmation boxes colored
-# TODO: subtract an hour from Uddish
 # TODO: Add colored text to messageboxes and main menu
-# TODO: Add a search box to the main menu so they can see search query without printing to console.
+# TODO: Make the search string display show (partial match)
 
 
 # Github stuff
@@ -219,13 +218,18 @@ myLabel = Label(root, text="Find for your name:")
 name_frame = Frame(root)
 # Scrollbar
 name_scrollbar = Scrollbar(name_frame, orient=VERTICAL)
-name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=37)
+name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=34)
 name_scrollbar.config(command=name_box.yview)
 
 names = []
 # Populate listbox with a specified max string length
 for row in df.iterrows():
-    name_box.insert(END, f"{row[1]['Name']} - {row[1]['Hours']}")
+    if (row[1]['Name'] != "Shivam Aarya" and row[1]['Name'] != "Uddish Sood"):
+        name_box.insert(END, f"{row[1]['Name']} - {row[1]['Hours']}")
+    elif (row[1]['Name'] == "Shivam Aarya"):
+        name_box.insert(END, f"{row[1]['Name']} - {row[1]['Hours']} (The best)")
+    elif (row[1]['Name'] == "Uddish Sood"):
+        name_box.insert(END, f"{row[1]['Name']} - {row[1]['Hours']} (The non-best)")
     names.append(row[1]["Name"])
 # Set initial selection
 name_box.select_set(0)
@@ -266,7 +270,9 @@ r = StringVar()
 r.set("sign in")
 
 search = StringVar()
-search.set("")
+search.set("Searching: ")
+searchLabel = Label(root, textvariable=search)
+
 
 sign_in_radio = Radiobutton(radioFrame, text="Sign-in", variable=r, value="sign in", background="light green")
 sign_out_radio = Radiobutton(radioFrame, text="Sign-out", variable=r, value="sign out", background="tomato")
@@ -274,6 +280,7 @@ sign_out_radio = Radiobutton(radioFrame, text="Sign-out", variable=r, value="sig
 save_button = Button(root, text="Save", command=save)
 
 # Pack stuff
+searchLabel.pack()
 myLabel.pack()
 name_scrollbar.pack(side=RIGHT, fill=Y)
 name_box.pack(pady=10, padx=10, side=LEFT, fill=BOTH, expand=True)
@@ -298,7 +305,7 @@ root.bind("<Escape>", lambda event: on_closing(df))
 
 def listbox_search(event):
     search.set(search.get() + event.char)
-    search_string = search.get()
+    search_string = search.get()[search.get().index(":") + 2:]
     found = False
     for i in range(len(names)):
         if names[i].lower().startswith(search_string):
@@ -307,7 +314,6 @@ def listbox_search(event):
             event.widget.see(i)
             name_box.event_generate("<<ListboxSelect>>")
             name_box.see(i)
-            print(f"searching: {search_string}")
             found = True
             break
     if not found:
@@ -316,13 +322,11 @@ def listbox_search(event):
                 name_box.select_clear(0, END)
                 name_box.selection_set(i)
                 name_box.see(i)
-                print(f"searching: {search_string}" + " (partial match)")
                 found = True
                 break
     if not found:
-        search.set(event.char)
-        print("search cleared")
-        print(f"searching: {event.char}")
+        search.set("Searching: " + event.char)
+
 
 
 root.bind("<Key>", lambda event: listbox_search(event))
