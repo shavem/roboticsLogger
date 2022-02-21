@@ -176,7 +176,7 @@ def on_closing(df):
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
-                print(f"\u001b[4m\u001b[1m{name} not signed out (default 1 hour)\u001b[0m")
+                print(f"\u001b[4m\u001b[1m\u001b[43;1m\u001b[30m{name} not signed out (default 1 hour)\u001b[0m")
             sync(df)
             save_df = df.sort_values(by=["Hours"], ascending=False,
                                      key=lambda x: x.str.split(":").str.get(0).astype(int))
@@ -231,6 +231,7 @@ for row in df.iterrows():
     elif (row[1]['Name'] == "Uddish Sood"):
         name_box.insert(END, f"{row[1]['Name']} - {row[1]['Hours']} (The non-best)")
     names.append(row[1]["Name"])
+    name_box.itemconfig(END, bg="light gray")
 # Set initial selection
 name_box.select_set(0)
 
@@ -248,6 +249,7 @@ def save():
                 now = datetime.now()
                 df.loc[df.index[df["Name"] == name].tolist()[0], current_date] = now.strftime("%H:%M:%S")
                 print(f"\u001b[42;1m\u001b[1m{name}\u001b[0m signed in at {now.strftime('%H:%M:%S')}")
+                name_box.itemconfig(name_box.curselection(), bg="palegreen")
         elif r.get() == "sign out":
             if name not in signed_in:
                 messagebox.showerror("Error", f"{name} has not signed in")
@@ -260,6 +262,7 @@ def save():
                 df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                     time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + hours_to_add)
                 print(f"\u001b[41;1m\u001b[30m\u001b[1m{name}\u001b[0m signed out at {now.strftime('%H:%M:%S')}")
+                name_box.itemconfig(name_box.curselection(), bg="salmon")
         else:
             print("Error: invalid input")
 
