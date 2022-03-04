@@ -93,6 +93,13 @@ gitDownload("RoboticsHourLog.csv")
 df = pd.read_csv("RoboticsHourLog.csv")
 df.to_csv("RoboticsHourLog.csv", index=False)
 
+# Soft-banned means that the user has logged in once that day, and they cannot have another session where they fail
+# to log out and receive an extra hour, but they can still log in and get more hours normally.
+#
+# Hard-banned means that the user has failed to log out in the first session and cannot sign in again.
+soft_banned = []
+hard_banned = []
+
 
 def sync(dataframe):
     gitDownload("OG.csv")
@@ -103,6 +110,12 @@ def sync(dataframe):
     if ogcurrent_date in ogdf.columns:
         for name in ogdf["Name"]:
             if str(ogdf.loc[ogdf.index[ogdf["Name"] == name].tolist()[0], ogcurrent_date]) != "nan":
+                if ("Not Signed Out" in str(ogdf.loc[ogdf.index[ogdf['Name'] == name].tolist()[0], ogcurrent_date])):
+                    hard_banned.append(name)
+                    print(f"\u001b[31m{name} is hard-banned\u001b[0m")
+                else:
+                    soft_banned.append(name)
+                    print(f"\u001b[31m{name} is soft-banned\u001b[0m")
                 print(
                     f"\u001b[33m{name}: {str(dataframe.loc[dataframe.index[dataframe['Name'] == name].tolist()[0], ogcurrent_date])} -> {str(ogdf.loc[ogdf.index[ogdf['Name'] == name].tolist()[0], ogcurrent_date])}\u001b[0m")
                 dataframe.loc[dataframe.index[dataframe["Name"] == name].tolist()[0], ogcurrent_date] = ogdf.loc[
@@ -124,7 +137,7 @@ signed_in = []
 # Reset today's date and create column if needed
 now = datetime.now()
 current_date = now.strftime("%Y-%m-%d")
-if not current_date in df.columns:
+if current_date not in df.columns:
     df[current_date] = ""
 
 
@@ -170,14 +183,18 @@ def on_closing(df):
     if len(signed_in) > 0:
         if messagebox.askokcancel("Quit",
                                   f"Do you want to quit? The following people have not signed out and will be set to a default of 1 hour: {list_to_string(signed_in)}"):
-            for name in signed_in:
-                seconds_to_add = 1 * 60 * 60
-
-                df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
-                df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
-                    time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
-                print(f"\u001b[4m\u001b[1m\u001b[43;1m\u001b[30m{name} not signed out (default 1 hour)\u001b[0m")
             sync(df)
+            for name in signed_in:
+                if name in soft_banned:
+                    messagebox.showerror("Error", f"{name} is soft-banned and cannot receive an extra hour as they have already logged in today.")
+                    df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out"
+                else:
+                    seconds_to_add = 1 * 60 * 60
+
+                    df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
+                    df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
+                        time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
+                    print(f"\u001b[4m\u001b[1m\u001b[43;1m\u001b[30m{name} not signed out (default 1 hour)\u001b[0m")
             save_df = df.sort_values(by=["Hours"], ascending=False,
                                      key=lambda x: x.str.split(":").str.get(0).astype(int))
             save_df.to_csv("RoboticsHourLog.csv", index=False)
@@ -244,6 +261,8 @@ def save():
         if r.get() == "sign in":
             if name in signed_in:
                 messagebox.showerror("Error", f"{name} has already signed in")
+            elif name in hard_banned:
+                messagebox.showerror("Error", f"{name} is hard-banned and cannot sign in as they have already failed to log out.")
             else:
                 signed_in.append(name)
                 now = datetime.now()
@@ -275,7 +294,6 @@ r.set("sign in")
 search = StringVar()
 search.set("Searching: ")
 searchLabel = Label(root, textvariable=search)
-
 
 sign_in_radio = Radiobutton(radioFrame, text="Sign-in", variable=r, value="sign in", background="light green")
 sign_out_radio = Radiobutton(radioFrame, text="Sign-out", variable=r, value="sign out", background="tomato")
@@ -329,7 +347,6 @@ def listbox_search(event):
                 break
     if not found:
         search.set("Searching: " + event.char)
-
 
 
 root.bind("<Key>", lambda event: listbox_search(event))
