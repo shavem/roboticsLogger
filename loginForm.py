@@ -235,7 +235,7 @@ myLabel = Label(root, text="Find for your name:")
 name_frame = Frame(root)
 # Scrollbar
 name_scrollbar = Scrollbar(name_frame, orient=VERTICAL)
-name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=34)
+name_box = Listbox(name_frame, yscrollcommand=name_scrollbar.set, width=36)
 name_scrollbar.config(command=name_box.yview)
 
 names = []
