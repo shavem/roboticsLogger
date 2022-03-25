@@ -5,33 +5,91 @@ from tkinter import messagebox
 import pandas as pd
 from datetime import datetime
 from github import Github
+from github.GithubException import UnknownObjectException, GithubException
 from dotenv import load_dotenv
 
+# TODO: Make the csv file change every year so future years can use this program
 # TODO: make everyone's current hours in the main menu aligned to the right
 # TODO: Make message confirmation boxes colored
 # TODO: Add colored text to messageboxes and main menu
 # TODO: Make the search string display show (partial match)
+# TODO: Comment this code
+# TODO: Organize this code into multiple files and stuff
+# TODO: Make the system for giving people custom name modifiers easy to use and edit
 
+
+
+# Default hours for someone that forgets to sign out
+DEFAULT_HOURS = 0.25
 
 # Github stuff
-user = "RoboticsLogger"
 load_dotenv()
-password = os.environ.get("password")
+user = os.environ.get("GITHUB_USER")
+password = os.environ.get("ACCESS_TOKEN")
 g = Github(password)
 build = os.environ.get("build")
-if build == "RoboticsLog":
-    print("\u001b[36mServer repo: RoboticsLog\u001b[0m")
-elif build == "RoboticsLogDevelopment":
-    print("\u001b[33mServer repo: RoboticsLogDevelopment\u001b[0m")
-else:
-    raise Exception(
-        f"Invalid build: {build}\nPlease set the BUILD= in the .env file to either RoboticsLog or RoboticsLogDevelopment.")
+filename = "log.csv"
+# if build == "RoboticsLog":
+#     print("\u001b[36mServer repo: RoboticsLog\u001b[0m")
+# elif build == "RoboticsLogDevelopment":
+#     print("\u001b[33mServer repo: RoboticsLogDevelopment\u001b[0m")
+# else:
+#     raise Exception(
+#         f"Invalid build: {build}\nPlease set the BUILD= in the .env file to either RoboticsLog or RoboticsLogDevelopment.")
 
 
 def gitDownload(filepath):
-    repo = g.get_user().get_repo(build)  # repo name
+    now = datetime.now()
+    date = now.strftime("%Y-%m-%d")
+    day = now.weekday()
+    day_of_the_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    commit_message = "Updated " + date + " (" + day_of_the_week[day] + ")"
+
+
+    try:
+        repo = g.get_user().get_repo(build)  # repo name
+    except UnknownObjectException:
+        account = g.get_user()
+        repo = account.create_repo(build)
+        print(f"\u001b[31mRepo has been created\u001b[0m")
+        new_csv = pd.DataFrame(columns=['Name'])
+        with open("members.txt", "r") as f:
+            members = f.readlines()
+        for member in members:
+            member = member.replace("\n", "")
+            new_csv = new_csv.append({'Name': member}, ignore_index=True)
+            new_csv['Hours'] = "0:00:00"
+        new_csv.to_csv("log.csv", index=False)
+        git_prefix = ''
+        with open(filename, 'r') as file:
+            content = file.read()
+        git_file = git_prefix + filename
+        repo.create_file(git_file, commit_message, content, branch="main")
+        print(f"\u001b[32m{git_file} created\u001b[0m")
+
+
 
     all_files = []
+    try:
+        contents = repo.get_contents("")
+    except GithubException:
+        print("Some Exception, probably a 404 where repo is empty")
+        new_csv = pd.DataFrame(columns=['Name', 'Hours'])
+        with open("members.txt", "r") as f:
+            members = f.readlines()
+        for member in members:
+            member = member.replace("\n", "")
+            new_csv = new_csv.append({'Name': member}, ignore_index=True)
+            new_csv['Hours'] = "0:00:00"
+        new_csv.to_csv(filepath, index=False)
+        git_prefix = ''
+        git_file = git_prefix + filename
+        with open(filename, 'r') as file:
+            content = file.read()
+        repo.create_file(git_file, commit_message, content, branch="main")
+        print(f"\u001b[32m{git_file} created\u001b[0m")
+        return
+
     contents = repo.get_contents("")
     while contents:
         file_content = contents.pop(0)
@@ -43,13 +101,13 @@ def gitDownload(filepath):
 
     # Download from github
     git_prefix = ''
-    git_file = git_prefix + 'RoboticsHourLog.csv'
+    git_file = git_prefix + filename
     if git_file in all_files:
         contents = repo.get_contents(git_file)
         with open(filepath, "wb") as f:
             f.write(contents.decoded_content)
     else:
-        raise Exception("Repo does not contain the csv file")
+        print(f"\u001b[31m{git_file} not found\u001b[0m")
 
 
 def gitUpload():
@@ -71,12 +129,12 @@ def gitUpload():
             file = file_content
             all_files.append(str(file).replace('ContentFile(path="', '').replace('")', ''))
 
-    with open('RoboticsHourLog.csv', 'r') as file:
+    with open(filename, 'r') as file:
         content = file.read()
 
     # Upload to github
     git_prefix = ''
-    git_file = git_prefix + 'RoboticsHourLog.csv'
+    git_file = git_prefix + filename
     if git_file in all_files:
         contents = repo.get_contents(git_file)
         repo.update_file(contents.path, commit_message, content, contents.sha, branch="main")
@@ -89,9 +147,9 @@ def gitUpload():
 
 
 # File import
-gitDownload("RoboticsHourLog.csv")
-df = pd.read_csv("RoboticsHourLog.csv")
-df.to_csv("RoboticsHourLog.csv", index=False)
+gitDownload(filename)
+df = pd.read_csv(filename)
+df.to_csv(filename, index=False)
 
 # Soft-banned means that the user has logged in once that day, and they cannot have another session where they fail
 # to log out and receive an extra hour, but they can still log in and get more hours normally.
@@ -174,7 +232,7 @@ def list_to_string(list):
 
 # TODO: Add the robotics icon
 root = Tk()
-root.title("Robotics Sign-In Form")
+root.title("ShivamBad Sign-In Form")
 
 
 # Closing
@@ -182,47 +240,47 @@ def on_closing(df):
     # TODO: open new window allowing user to input number of hours for people that haven't signed out
     if len(signed_in) > 0:
         if messagebox.askokcancel("Quit",
-                                  f"Do you want to quit? The following people have not signed out and will be set to a default of 1 hour: {list_to_string(signed_in)}"):
+                                  f"Do you want to quit? The following people have not signed out and will be set to a default of f{DEFAULT_HOURS} hour(s): {list_to_string(signed_in)}"):
             sync(df)
             for name in signed_in:
                 if name in soft_banned:
                     messagebox.showerror("Error", f"{name} is soft-banned and cannot receive an extra hour as they have already logged in today.")
                     df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out"
                 else:
-                    seconds_to_add = 1 * 60 * 60
+                    seconds_to_add = DEFAULT_HOURS * 60 * 60
 
-                    df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default 1 hour"
+                    df.loc[df.index[df["Name"] == name].tolist()[0], current_date] += f" - Not Signed Out: default {DEFAULT_HOURS} hour"
                     df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"] = seconds_to_time(
                         time_to_seconds(df.loc[df.index[df["Name"] == name].tolist()[0], "Hours"]) + seconds_to_add)
-                    print(f"\u001b[4m\u001b[1m\u001b[43;1m\u001b[30m{name} not signed out (default 1 hour)\u001b[0m")
+                    print(f"\u001b[4m\u001b[1m\u001b[43;1m\u001b[30m{name} not signed out (default {DEFAULT_HOURS} hour)\u001b[0m")
             save_df = df.sort_values(by=["Hours"], ascending=False,
                                      key=lambda x: x.str.split(":").str.get(0).astype(int))
-            save_df.to_csv("RoboticsHourLog.csv", index=False)
+            save_df.to_csv(filename, index=False)
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
             try:
-                os.remove("RoboticsHourLog.csv")
-                print("\u001b[32mRoboticsHourLog.csv removed successfully\u001b[0m")
+                os.remove(filename)
+                print(f"\u001b[32m{filename} removed successfully\u001b[0m")
             except OSError as error:
                 print(error)
-                print("\u001b[31mRoboticsHourLog.csv can not be removed\u001b[0m")
+                print(f"\u001b[31m{filename} can not be removed\u001b[0m")
             root.destroy()
     else:
         if messagebox.askokcancel("Quit", "Do you want to quit?"):
             sync(df)
             save_df = df.sort_values(by=["Hours"], ascending=False,
                                      key=lambda x: x.str.split(":").str.get(0).astype(int))
-            save_df.to_csv("RoboticsHourLog.csv", index=False)
+            save_df.to_csv(filename, index=False)
             message = gitUpload()
             save_df.to_csv(f"backup/{message}.csv", index=False)
             print(save_df)
             try:
-                os.remove("RoboticsHourLog.csv")
-                print("\u001b[32mRoboticsHourLog.csv removed successfully\u001b[0m")
+                os.remove(filename)
+                print(f"\u001b[32m{filename} removed successfully\u001b[0m")
             except OSError as error:
                 print(error)
-                print("\u001b[31mRoboticsHourLog.csv can not be removed\u001b[0m")
+                print(f"\u001b[31m{filename} can not be removed\u001b[0m")
             root.destroy()
 
 
@@ -352,3 +410,5 @@ def listbox_search(event):
 root.bind("<Key>", lambda event: listbox_search(event))
 
 root.mainloop()
+
+print("If you had any problems with this script, \u001b[4mplease inform Shivam.\u001b[0m")
